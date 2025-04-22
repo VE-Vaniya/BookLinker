@@ -65,6 +65,15 @@ const SideNav = () => {
           >
             👥 Profile
           </NavLink>
+
+          {/* New "File Complaints" Button */}
+          <NavLink
+            to="/DashBoard/FileComplaints"
+            className={linkClasses}
+            onClick={() => setIsOpen(false)}
+          >
+            📋 File Complaints
+          </NavLink>
         </nav>
       </aside>
 

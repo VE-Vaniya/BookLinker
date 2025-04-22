@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import DashBoard from "./components/DashBoard";
 import ProfileSetup from "./components/Profile";
 import AddBook from "./components/AddBook";
+import FileComplaint from "./components/FileComplaint";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/DashBoard" element={<DashBoard />} />
         <Route path="/DashBoard/Profile" element={<ProfileSetup />} />
         <Route path="/DashBoard/AddBook" element={<AddBook />} />
+        <Route path="/DashBoard/FileComplaints" element={<FileComplaint />} />
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>
     </>
