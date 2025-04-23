@@ -4,6 +4,8 @@ import SignUp from "./components/SignUp";
 import LogIn from "./components/LogIn";
 import { Routes, Route } from "react-router-dom";
 import DashBoard from "./components/DashBoard";
+import ViewTransection from "./components/ViewTransection";
+import "./index.css";
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
         <Route path="/DashBoard" element={<DashBoard />} />
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>
+      {/* <ViewTransection /> */}
     </>
   );
 }
