@@ -13,6 +13,8 @@ export default function AddBook() {
     genre: "",
     description: "",
     file: null,
+    quantity: 1,
+    status: "sold",
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -118,9 +120,24 @@ export default function AddBook() {
     if (!form.genre) newErrors.push("Genre is required.");
     if (!form.description) newErrors.push("Description is required.");
     if (!form.file) newErrors.push("Image file is required.");
+    if (!form.quantity) newErrors.push("Quantity is required.");
 
     if (form.isbn && !/^\d{13}$/.test(form.isbn)) {
       newErrors.push("ISBN must be a 13-digit number.");
+    }
+
+    if (
+      form.quantity &&
+      (isNaN(parseInt(form.quantity)) || parseInt(form.quantity) <= 0)
+    ) {
+      newErrors.push("Quantity must be a positive number greater than 0.");
+    }
+
+    if (
+      form.price &&
+      (isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0)
+    ) {
+      newErrors.push("Price must be a positive number greater than 0.");
     }
 
     return newErrors;
@@ -150,6 +167,8 @@ export default function AddBook() {
         genre: form.genre,
         description: form.description,
         userEmail: user.email,
+        quantity: parseInt(form.quantity),
+        status: form.status,
       };
 
       formData.append(
@@ -175,6 +194,8 @@ export default function AddBook() {
           genre: "",
           description: "",
           file: null,
+          quantity: 1,
+          status: "sold",
         });
         setPreviewUrl(null);
         setErrors([]);
@@ -341,6 +362,16 @@ export default function AddBook() {
               value={form.isbn}
               onChange={handleChange}
               placeholder="ISBN"
+              required
+              className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
+            />
+            <input
+              type="number"
+              name="quantity"
+              value={form.quantity}
+              onChange={handleChange}
+              placeholder="Quantity"
+              min="1"
               required
               className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
             />

@@ -195,8 +195,11 @@ export default function FileComplaint() {
             <option className="text-black" value="Bug">
               Bug
             </option>
-            <option className="text-black" value="Feature Request">
-              Feature Request
+            <option className="text-black" value="Performance Issue">
+              Performance Issue
+            </option>
+            <option className="text-black" value="App Crashes">
+              App Crashes
             </option>
             <option className="text-black" value="Content Issue">
               Content Issue
@@ -221,7 +224,7 @@ export default function FileComplaint() {
             ) : (
               <button
                 type="submit"
-                className="bg-[#4c2b1f] text-white px-8 py-2 rounded-xl hover:bg-[#6e3f2d] transition"
+                className="cursor-pointer bg-[#4c2b1f] text-white px-8 py-2 rounded-xl hover:bg-[#6e3f2d] transition"
               >
                 Submit
               </button>

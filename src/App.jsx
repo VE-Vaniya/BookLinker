@@ -7,6 +7,8 @@ import DashBoard from "./components/DashBoard";
 import ProfileSetup from "./components/Profile";
 import AddBook from "./components/AddBook";
 import FileComplaint from "./components/FileComplaint";
+import ViewTransection from "./components/ViewTransection";
+import ViewHistory from "./components/ViewHistory";
 
 function App() {
   return (
@@ -19,6 +21,11 @@ function App() {
         <Route path="/DashBoard/Profile" element={<ProfileSetup />} />
         <Route path="/DashBoard/AddBook" element={<AddBook />} />
         <Route path="/DashBoard/FileComplaints" element={<FileComplaint />} />
+        <Route
+          path="/DashBoard/ViewTransection"
+          element={<ViewTransection />}
+        />
+        <Route path="/DashBoard/ViewHistory" element={<ViewHistory />} />
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>
     </>
