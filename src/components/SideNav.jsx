@@ -104,11 +104,20 @@ const SideNav = () => {
           >
             📜 View History
           </NavLink>
+
+          {/* Chat Button */}
+          <NavLink
+            to="/DashBoard/Chat"
+            className={linkClasses}
+            onClick={() => setIsOpen(false)}
+          >
+            💬 Chat
+          </NavLink>
         </nav>
 
         <button
           onClick={handleLogout}
-          className="mt-4 text-left text-white px-2 py-1 rounded-md hover:bg-white/10 transition-colors duration-200"
+          className="w-full cursor-pointer mt-4 text-left text-white px-2 py-1 rounded-md hover:bg-white/10 transition-colors duration-200"
         >
           🚪 Log Out
         </button>
