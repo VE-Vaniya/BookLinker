@@ -9,7 +9,7 @@ const SignUp = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Donater");
+  const [role, setRole] = useState("Donator");
   const [emailError, setEmailError] = useState("");
   const [signUpError, setSignUpError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ const SignUp = () => {
       const user = userCredential.user;
       const token = await user.getIdToken();
 
-      const response = await fetch("http://localhost:8080/auth/signup", {
+      const response = await fetch("http://localhost:8081/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +76,7 @@ const SignUp = () => {
 
       navigate("/DashBoard");
     } catch (error) {
-      setSignUpError("Failed to create account. Try again.");
+      setSignUpError("Failed to create account. Try again." + error);
       console.error(error);
     } finally {
       setLoading(false);
@@ -144,7 +144,7 @@ const SignUp = () => {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               >
-                <option value="Donater">Donater</option>
+                <option value="Donator">Donator</option>
                 <option value="Buyer">Buyer</option>
                 <option value="Lender">Lender</option>
                 <option value="Seller">Seller</option>
