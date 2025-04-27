@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
 import SignUp from "./components/SignUp";
 import LogIn from "./components/LogIn";
@@ -16,7 +16,6 @@ import { getDatabase, onValue, ref } from "firebase/database";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
-  const navigate = useNavigate();
   const db = getDatabase();
 
   const getUserRole = (uid) => {
@@ -35,12 +34,12 @@ function App() {
         const uid = user.uid;
         getUserRole(uid);
       } else {
-        navigate("/login");
+        setUserRole(null);
       }
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, []);
 
   return (
     <Routes>
@@ -111,13 +110,18 @@ function App() {
           />
         </>
       )}
-
-      
       {/* if you want to add routes of different role copy the above code which 
       starts with userRole==="Seller" and paste it here and just change the components 
       like you have created a different component folder for donator so import those and use it 
       protectedRoute will remain same  */}
-      <Route path="*" element={<h1>404 Not Found</h1>} />
+      <Route
+        path="*"
+        element={
+          <div className="flex justify-center items-center h-screen">
+            <div className="spinner-border animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16"></div>
+          </div>
+        }
+      />
     </Routes>
   );
 }

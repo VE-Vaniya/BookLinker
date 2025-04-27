@@ -26,10 +26,7 @@ function ViewTransection() {
       if (user) {
         const safeEmail = user.email.replace(/\./g, "_");
         const db = getDatabase();
-        const profileImageRef = ref(
-          db,
-          `userProfiles/${safeEmail}/profileImageUrl`
-        );
+        const profileImageRef = ref(db, `userProfiles/${safeEmail}/profileImageUrl`);
 
         try {
           setIsAvatarLoading(true);
@@ -52,16 +49,12 @@ function ViewTransection() {
 
     const updateDateTime = () => {
       const now = new Date();
-      setCurrentTime(
-        now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      );
-      setCurrentDate(
-        now.toLocaleDateString("en-GB", {
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-        })
-      );
+      setCurrentTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setCurrentDate(now.toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+      }));
     };
 
     updateDateTime();
@@ -71,16 +64,14 @@ function ViewTransection() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!userEmail) return;
+      if (!userEmail) return; 
 
       setLoading(true);
       setError(null);
 
       try {
         const response = await fetch(
-          `http://localhost:8081/api/books/transaction-history?userEmail=${encodeURIComponent(
-            userEmail
-          )}`,
+          `http://localhost:8081/api/books/transaction-history?userEmail=${encodeURIComponent(userEmail)}`,
           {
             method: "GET",
             headers: {
@@ -106,7 +97,7 @@ function ViewTransection() {
     };
 
     fetchData();
-  }, [userEmail]);
+  }, [userEmail]); 
 
   const style = {
     parent_div: {
@@ -121,9 +112,7 @@ function ViewTransection() {
   };
 
   const processTransactionData = () => {
-    const soldItems = data.filter(
-      (transaction) => transaction.status === "sold"
-    );
+    const soldItems = data.filter((transaction) => transaction.status === "sold");
 
     return soldItems.map((transaction) => (
       <div key={transaction._id} className="m-2.5">
@@ -140,12 +129,12 @@ function ViewTransection() {
     <div
       className="min-h-screen flex"
       style={{
-        background:
-          "radial-gradient(ellipse at center, #A8816C 0%, #905A40 50%, #6E4C3D 100%)",
+        background: "radial-gradient(ellipse at center, #A8816C 0%, #905A40 50%, #6E4C3D 100%)",
       }}
     >
       <SideNav />
       <main className="flex-1 p-10 text-white">
+        
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
             <h1 className="text-2xl font-semibold">Transaction History</h1>
@@ -174,6 +163,7 @@ function ViewTransection() {
           </div>
         </div>
 
+       
         {loading ? (
           <div className="flex justify-center items-center min-h-[300px]">
             <div className="w-8 h-8 border-4 border-white/50 border-t-transparent rounded-full animate-spin" />
