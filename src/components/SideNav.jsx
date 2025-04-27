@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebaseconfig";
+import { useNavigate } from "react-router-dom";
 
 const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
@@ -15,6 +19,17 @@ const SideNav = () => {
         ? "bg-white/20 text-white font-semibold"
         : "text-white/70 hover:text-white hover:bg-white/10"
     }`;
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        console.log("User logged out successfully");
+        navigate("/login");
+      })
+      .catch((error) => {
+        console.error("Error logging out: ", error);
+      });
+  };
 
   return (
     <>
@@ -66,7 +81,6 @@ const SideNav = () => {
             👥 Profile
           </NavLink>
 
-         
           <NavLink
             to="/DashBoard/FileComplaints"
             className={linkClasses}
@@ -75,7 +89,6 @@ const SideNav = () => {
             📋 File Complaints
           </NavLink>
 
-        
           <NavLink
             to="/DashBoard/ViewTransection"
             className={linkClasses}
@@ -92,6 +105,13 @@ const SideNav = () => {
             📜 View History
           </NavLink>
         </nav>
+
+        <button
+          onClick={handleLogout}
+          className="mt-4 text-left text-white px-2 py-1 rounded-md hover:bg-white/10 transition-colors duration-200"
+        >
+          🚪 Log Out
+        </button>
       </aside>
 
       <main className="lg:ml-64 p-4 overflow-auto"> </main>
