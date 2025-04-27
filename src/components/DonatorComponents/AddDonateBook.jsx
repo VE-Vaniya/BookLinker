@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import SideNav from "../components/SideNav";
+import SideNav from "../SideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
 
-export default function AddBook() {
+export default function AddDonateBook() {
   const [form, setForm] = useState({
     bookName: "",
     authorName: "",
@@ -14,7 +14,7 @@ export default function AddBook() {
     description: "",
     file: null,
     quantity: 1,
-    status: "sold",
+    status: "donate", // This correctly sets the book status as donate
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -22,7 +22,7 @@ export default function AddBook() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSeller, setIsSeller] = useState(false);
+  const [isDonator, setIsDonator] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,8 +51,8 @@ export default function AddBook() {
           ]);
 
           if (roleSnap.exists()) {
-            setIsSeller(
-              roleSnap.val() === "seller" || roleSnap.val() === "Seller"
+            setIsDonator(
+              roleSnap.val() === "donator" || roleSnap.val() === "donator"
             );
           }
 
@@ -176,7 +176,7 @@ export default function AddBook() {
         new Blob([JSON.stringify(bookData)], { type: "application/json" })
       );
       formData.append("image", form.file);
-      formData.append("isSeller", isSeller);
+      formData.append("isDonator", isDonator);
 
       const response = await fetch("http://localhost:8081/api/books/add", {
         method: "POST",
@@ -195,7 +195,7 @@ export default function AddBook() {
           description: "",
           file: null,
           quantity: 1,
-          status: "sold",
+          status: "donate",
         });
         setPreviewUrl(null);
         setErrors([]);
@@ -353,7 +353,8 @@ export default function AddBook() {
               value={form.price}
               onChange={handleChange}
               placeholder="Price"
-              required
+              disabled
+              style={{ opacity: 0.5 }}
               className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
             />
             <input
@@ -414,6 +415,14 @@ export default function AddBook() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Add a donation note */}
+          <div className="bg-green-500/20 p-3 rounded-lg text-white">
+            <p className="text-sm">
+              📚 This book will be marked for donation. Thank you for your
+              generosity!
+            </p>
           </div>
 
           <div className="text-center">

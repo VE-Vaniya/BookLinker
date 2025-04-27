@@ -9,6 +9,9 @@ import AddBook from "./components/AddBook";
 import FileComplaint from "./components/FileComplaint";
 import ViewTransection from "./components/ViewTransection";
 import ViewHistory from "./components/ViewHistory";
+import ViewDonateHistory from "./components/DonatorComponents/ViewDonateHistory";
+import ViewDonateTransection from "./components/DonatorComponents/ViewDonateTransection";
+import AddDonateBook from "./components/DonatorComponents/AddDonateBook";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./components/firebaseconfig";
@@ -110,10 +113,67 @@ function App() {
           />
         </>
       )}
-      {/* if you want to add routes of different role copy the above code which 
-      starts with userRole==="Seller" and paste it here and just change the components 
-      like you have created a different component folder for donator so import those and use it 
-      protectedRoute will remain same  */}
+      {userRole === "Donator" && (
+        <>
+          {/* Donator Routes */}
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <DashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Profile"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/AddBook"
+            element={
+              <ProtectedRoute>
+                <AddDonateBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/FileComplaints"
+            element={
+              <ProtectedRoute>
+                <FileComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewTransection"
+            element={
+              <ProtectedRoute>
+                <ViewDonateTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewHistory"
+            element={
+              <ProtectedRoute>
+                <ViewDonateHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
       <Route
         path="*"
         element={
