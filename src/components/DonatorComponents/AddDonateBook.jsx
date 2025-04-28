@@ -7,14 +7,13 @@ export default function AddDonateBook() {
   const [form, setForm] = useState({
     bookName: "",
     authorName: "",
-    price: "",
     isbn: "",
     condition: "",
     genre: "",
     description: "",
     file: null,
     quantity: 1,
-    status: "donate", // This correctly sets the book status as donate
+    status: "donating",
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -22,7 +21,7 @@ export default function AddDonateBook() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isDonator, setIsDonator] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,8 +50,8 @@ export default function AddDonateBook() {
           ]);
 
           if (roleSnap.exists()) {
-            setIsDonator(
-              roleSnap.val() === "donator" || roleSnap.val() === "donator"
+            setIsSeller(
+              roleSnap.val() === "Donator" || roleSnap.val() === "donator"
             );
           }
 
@@ -114,7 +113,6 @@ export default function AddDonateBook() {
 
     if (!form.bookName) newErrors.push("Book Name is required.");
     if (!form.authorName) newErrors.push("Author Name is required.");
-    if (!form.price) newErrors.push("Price is required.");
     if (!form.isbn) newErrors.push("ISBN is required.");
     if (!form.condition) newErrors.push("Condition is required.");
     if (!form.genre) newErrors.push("Genre is required.");
@@ -131,13 +129,6 @@ export default function AddDonateBook() {
       (isNaN(parseInt(form.quantity)) || parseInt(form.quantity) <= 0)
     ) {
       newErrors.push("Quantity must be a positive number greater than 0.");
-    }
-
-    if (
-      form.price &&
-      (isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0)
-    ) {
-      newErrors.push("Price must be a positive number greater than 0.");
     }
 
     return newErrors;
@@ -161,7 +152,6 @@ export default function AddDonateBook() {
       const bookData = {
         name: form.bookName,
         author: form.authorName,
-        price: parseFloat(form.price),
         isbn: form.isbn,
         condition: form.condition,
         genre: form.genre,
@@ -176,7 +166,7 @@ export default function AddDonateBook() {
         new Blob([JSON.stringify(bookData)], { type: "application/json" })
       );
       formData.append("image", form.file);
-      formData.append("isDonator", isDonator);
+      formData.append("isSeller", isSeller);
 
       const response = await fetch("http://localhost:8081/api/books/add", {
         method: "POST",
@@ -188,14 +178,13 @@ export default function AddDonateBook() {
         setForm({
           bookName: "",
           authorName: "",
-          price: "",
           isbn: "",
           condition: "",
           genre: "",
           description: "",
           file: null,
           quantity: 1,
-          status: "donate",
+          status: "donating",
         });
         setPreviewUrl(null);
         setErrors([]);
@@ -349,16 +338,6 @@ export default function AddDonateBook() {
             </select>
             <input
               type="text"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              placeholder="Price"
-              disabled
-              style={{ opacity: 0.5 }}
-              className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
-            />
-            <input
-              type="text"
               name="isbn"
               value={form.isbn}
               onChange={handleChange}
@@ -415,14 +394,6 @@ export default function AddDonateBook() {
                 />
               </div>
             )}
-          </div>
-
-          {/* Add a donation note */}
-          <div className="bg-green-500/20 p-3 rounded-lg text-white">
-            <p className="text-sm">
-              📚 This book will be marked for donation. Thank you for your
-              generosity!
-            </p>
           </div>
 
           <div className="text-center">
