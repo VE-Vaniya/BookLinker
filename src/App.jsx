@@ -11,6 +11,9 @@ import ViewTransection from "./components/ViewTransection";
 import ViewHistory from "./components/ViewHistory";
 import ViewDonateHistory from "./components/DonatorComponents/ViewDonateHistory";
 import ViewDonateTransection from "./components/DonatorComponents/ViewDonateTransection";
+import ViewLendTransection from "./components/LenderComponents/ViewLendTransection";
+import ViewLendHistory from "./components/LenderComponents/ViewLendHistory";
+import AddLendBook from "./components/LenderComponents/AddLendBook";
 import AddDonateBook from "./components/DonatorComponents/AddDonateBook";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -100,6 +103,67 @@ function App() {
             element={
               <ProtectedRoute>
                 <ViewHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+       {userRole === "Lender" && (
+        <>
+          {/* Seller Routes */}
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <DashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Profile"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/AddBook"
+            element={
+              <ProtectedRoute>
+                <AddLendBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/FileComplaints"
+            element={
+              <ProtectedRoute>
+                <FileComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewTransection"
+            element={
+              <ProtectedRoute>
+                <ViewLendTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewHistory"
+            element={
+              <ProtectedRoute>
+                <ViewLendHistory />
               </ProtectedRoute>
             }
           />

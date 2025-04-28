@@ -95,7 +95,7 @@ export default function FileComplaint() {
       };
 
       const response = await fetch(
-        "http://localhost:8081/api/complaints/file",
+        "http://localhost:8081/api/complaints/file-general",
         {
           method: "POST",
           headers: {
