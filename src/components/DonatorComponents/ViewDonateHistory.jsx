@@ -78,10 +78,10 @@ function ViewDonateHistory() {
     const url = searchQuery.trim()
       ? `http://localhost:8081/api/books/search?query=${encodeURIComponent(
           searchQuery
-        )}&userEmail=${encodeURIComponent(userEmail)}&status=donate`
-      : `http://localhost:8081/api/books/available-books?userEmail=${encodeURIComponent(
+        )}&userEmail=${encodeURIComponent(userEmail)}`
+      : `http://localhost:8081/api/books/available-books?role=donator&userEmail=${encodeURIComponent(
           userEmail
-        )}&status=donate`;
+        )}`;
 
     try {
       const response = await fetch(url, {
