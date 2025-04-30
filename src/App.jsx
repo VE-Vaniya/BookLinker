@@ -15,6 +15,12 @@ import ViewLendTransection from "./components/LenderComponents/ViewLendTransecti
 import ViewLendHistory from "./components/LenderComponents/ViewLendHistory";
 import AddLendBook from "./components/LenderComponents/AddLendBook";
 import AddDonateBook from "./components/DonatorComponents/AddDonateBook";
+import BuyerDashBoard from "./components/BuyerComponents/BuyerDashBoard";
+import BuyerProfileSetup from "./components/BuyerComponents/BuyerProfile";
+import ViewAvailableBooks from "./components/BuyerComponents/ViewAvailableBooks";
+import BuyerFileComplaint from "./components/BuyerComponents/BuyerFileComplaint";
+import ViewBuyerTransection from "./components/BuyerComponents/ViewBuyerTransection";
+import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./components/firebaseconfig";
@@ -116,7 +122,7 @@ function App() {
           />
         </>
       )}
-       {userRole === "Lender" && (
+      {userRole === "Lender" && (
         <>
           {/* Seller Routes */}
           <Route
@@ -233,6 +239,61 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+      {userRole === "Buyer" && (
+        <>
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <BuyerDashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/BuyerProfile"
+            element={
+              <ProtectedRoute>
+                <BuyerProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/ViewAvailableBooks"
+            element={
+              <ProtectedRoute>
+                <ViewAvailableBooks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/ViewAvailableBooks/Cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/BuyerFileComplaints"
+            element={
+              <ProtectedRoute>
+                <BuyerFileComplaint />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/ViewBuyerTransaction"
+            element={
+              <ProtectedRoute>
+                <ViewBuyerTransection />
               </ProtectedRoute>
             }
           />
