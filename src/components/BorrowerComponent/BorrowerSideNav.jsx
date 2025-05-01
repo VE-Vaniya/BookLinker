@@ -97,6 +97,14 @@ const BorrowerSideNav = () => {
             🔄 View Transactions
           </NavLink>
 
+          <NavLink
+            to="/DashBoard/PayFine"
+            className={linkClasses}
+            onClick={() => setIsOpen(false)}
+          >
+            💰 Pay Fine
+          </NavLink>
+
           {/* Chat Button */}
           <NavLink
             to="/DashBoard/Chat"

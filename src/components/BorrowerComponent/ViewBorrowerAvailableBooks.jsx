@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import SideNav from "./BorrowerSideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
-import { useNavigate } from "react-router-dom";
 
 function ViewBorrowerAvailableBooks() {
-  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,6 +12,7 @@ function ViewBorrowerAvailableBooks() {
   const [currentDate, setCurrentDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const auth = getAuth();
@@ -74,7 +73,7 @@ function ViewBorrowerAvailableBooks() {
       ? `http://localhost:8081/api/books/search?query=${encodeURIComponent(
           searchQuery
         )}`
-      : `http://localhost:8081/api/books/available-books?role=buyer`;
+      : `http://localhost:8081/api/books/available-books?role=borrower`;
 
     try {
       const response = await fetch(url, {
@@ -104,36 +103,39 @@ function ViewBorrowerAvailableBooks() {
     fetchData();
   }, [searchQuery]);
 
-  const handleCartClick = () => {
-    navigate("./Cart");
-  };
-
-  const handleAddToCart = async (book) => {
+  const handleBorrowBook = async (book) => {
     try {
-      // Get existing cart from localStorage or initialize empty array
-      const existingCart = JSON.parse(localStorage.getItem("bookCart") || "[]");
-
-      // Check if the book is already in the cart
-      const bookExists = existingCart.some(
-        (item) => item.bookId === book.bookId
-      );
-
-      if (bookExists) {
-        setError("This book is already in your cart!");
+      // Validate book is available
+      if (book.quantity <= 0) {
+        setError("This book is not available for borrowing!");
         setTimeout(() => setError(null), 3000);
         return;
       }
 
-      // Add book to cart
-      const updatedCart = [...existingCart, book];
+      const updateStatus = await fetch(
+        `http://localhost:8081/api/books/update-status?bookId=${
+          book.bookId
+        }&userEmail=${getAuth().currentUser.email}&newStatus=borrowed`,
+        {
+          method: "PUT",
+        }
+      );
 
-      // Save updated cart to localStorage
-      localStorage.setItem("bookCart", JSON.stringify(updatedCart));
-
-      // Show success message
-      alert("Book added to cart successfully!");
+      if (updateStatus.ok) {
+        setSuccessMessage("Book borrowed successfully!");
+        setTimeout(() => setSuccessMessage(null), 3000);
+        // Refresh the book list to show updated availability
+        fetchData();
+      } else {
+        const errorText = await updateStatus.text();
+        setError(
+          `Error: ${updateStatus.status} ${updateStatus.statusText} ${errorText}`
+        );
+        setTimeout(() => setError(null), 3000);
+      }
     } catch (error) {
-      setError(error.message || "Failed to add book to cart");
+      setError(error.message || "Failed to borrow book");
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -151,7 +153,7 @@ function ViewBorrowerAvailableBooks() {
           <div className="text-center lg:text-left mb-4 lg:mb-0">
             <h1 className="text-2xl font-semibold">Available Books</h1>
             <p className="text-sm text-white/70">
-              Browse all books available for borrowed
+              Browse all books available for borrowing
             </p>
           </div>
           <div className="hidden lg:flex items-center gap-4">
@@ -178,7 +180,7 @@ function ViewBorrowerAvailableBooks() {
         </div>
 
         <div className="flex justify-center mb-6 relative">
-          <div className="w-full max-w-md relative flex items-center">
+          <div className="w-full max-w-md relative">
             <input
               type="text"
               placeholder="Search by Book Name, Author, or Genre"
@@ -186,36 +188,25 @@ function ViewBorrowerAvailableBooks() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="text-white placeholder:text-white w-full px-4 py-2 rounded-full border-2 border-white/50 focus:outline-none"
             />
-            <button
-              onClick={handleCartClick}
-              className="absolute right-0 bg-[#4a2c2a] text-white px-4 py-2 rounded-full flex items-center justify-center hover:bg-[#3a1c1a] transition-colors"
-              style={{ transform: "translateX(calc(100% + 10px))" }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              Cart
-            </button>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-500 text-white p-3 rounded mb-4 text-center transition-opacity animate-pulse">
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="bg-green-500 text-white p-3 rounded mb-4 text-center transition-opacity">
+            {successMessage}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center min-h-[300px]">
             <div className="w-8 h-8 border-4 border-white/50 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : error ? (
-          <div className="text-red-400 text-center">{error}</div>
         ) : data.length === 0 ? (
           <div className="text-white text-center mt-10">No books found</div>
         ) : (
@@ -248,10 +239,16 @@ function ViewBorrowerAvailableBooks() {
 
                     <div className="flex items-center justify-between mt-2">
                       <button
-                        onClick={() => handleAddToCart(book)}
-                        className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-red-600 hover:bg-red-700"
+                        onClick={() => handleBorrowBook(book)}
+                        className={`text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer
+                          ${
+                            book.quantity > 0
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "bg-gray-500 cursor-not-allowed"
+                          }`}
+                        disabled={book.quantity <= 0}
                       >
-                        Add to Cart
+                        {book.quantity > 0 ? "Borrow Book" : "Out of Stock"}
                       </button>
                     </div>
                   </div>

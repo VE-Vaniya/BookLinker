@@ -25,6 +25,7 @@ import ViewBorrowerAvailableBooks from "./components/BorrowerComponent/ViewBorro
 import ViewBorrowerTransection from "./components/BorrowerComponent/ViewBorrowerTransection";
 import BorrowerFileComplaint from "./components/BorrowerComponent/BorrowerFileComplaint";
 import BorrowerDashBoard from "./components/BorrowerComponent/BorrowerDashBoard";
+import PayFine from "./components/BorrowerComponent/PayFine";
 import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -362,6 +363,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chat />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/DashBoard/PayFine"
+            element={
+              <ProtectedRoute>
+                <PayFine />
               </ProtectedRoute>
             }
           />

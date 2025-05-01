@@ -94,10 +94,80 @@ function Cart() {
   };
 
   // Handle checkout
-  const handleCheckout = () => {
-    alert("Proceeding to checkout...");
-    // Implement checkout logic or navigation here
+  const handleCheckout = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        setError("You must be logged in to checkout");
+        return;
+      }
+
+      if (cartItems.length === 0) {
+        setError("Your cart is empty");
+        return;
+      }
+
+      // For each book in cart, we need to create a FormData and make a request
+      for (const book of cartItems) {
+        const formData = new FormData();
+
+        // Convert book object to JSON string
+        const bookData = {
+          ...book,
+          borrowerId: user.uid,
+          borrowerEmail: user.email,
+          status: "pending",
+        };
+
+        formData.append("book", JSON.stringify(bookData));
+
+        // If we have an image URL, fetch the image and append it
+        if (book.imageUrl) {
+          try {
+            const imageResponse = await fetch(book.imageUrl);
+            const imageBlob = await imageResponse.blob();
+            formData.append("image", imageBlob, "book_image.jpg");
+          } catch (error) {
+            console.error("Failed to fetch image:", error);
+            // Continue with default image if needed
+            formData.append("image", new Blob(), "placeholder.jpg");
+          }
+        } else {
+          // Append empty image if no image URL
+          formData.append("image", new Blob(), "placeholder.jpg");
+        }
+
+        // This is for borrower checkout
+        formData.append("isSeller", "false");
+
+        // Send request to backend
+        const response = await fetch("http://localhost:5000/api/books/add", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to add book: ${response.statusText}`);
+        }
+      }
+
+      // Clear cart after successful checkout
+      setCartItems([]);
+      localStorage.setItem("bookCart", JSON.stringify([]));
+
+      alert("Checkout successful! Your books have been requested.");
+      navigate("/borrower/dashboard");
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      setError(`Checkout failed: ${error.message}`);
+    }
   };
+  // const handleCheckout = () => {
+  //   alert("Proceeding to checkout...");
+  //   // Implement checkout logic or navigation here
+  // };
 
   // Clear entire cart
   const clearCart = () => {
