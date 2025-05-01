@@ -79,7 +79,7 @@ function ViewHistory() {
       ? `http://localhost:8081/api/books/search?query=${encodeURIComponent(
           searchQuery
         )}&userEmail=${encodeURIComponent(userEmail)}`
-      : `http://localhost:8081/api/books/available-books?userEmail=${encodeURIComponent(
+      : `http://localhost:8081/api/books/available-books?role=Seller&userEmail=${encodeURIComponent(
           userEmail
         )}`;
 
