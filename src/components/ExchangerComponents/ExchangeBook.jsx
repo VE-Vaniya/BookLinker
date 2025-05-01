@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import SideNav from "../SideNav";
+import { useNavigate } from "react-router-dom";
+import ExchangerSideNav from "./ExchangerSideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
-import { onValue } from "firebase/database";
 
-function ViewLendHistory() {
+function ExchangeBook() {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,6 +14,7 @@ function ViewLendHistory() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(true);
   const [userEmail, setUserEmail] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const auth = getAuth();
@@ -76,23 +77,11 @@ function ViewLendHistory() {
     setLoading(true);
     setError(null);
 
-    const uid = getAuth().currentUser.uid;
-    console.log(uid);
-    let UserRole;
-    const db = getDatabase();
-    const userRoleRef = ref(db, `users/${uid}/role`);
-    onValue(userRoleRef, (snapshot) => {
-      const role = snapshot.val();
-      if (role) {
-        UserRole = role;
-      }
-    });
-
     const url = searchQuery.trim()
       ? `http://localhost:8081/api/books/search?query=${encodeURIComponent(
           searchQuery
         )}&userEmail=${encodeURIComponent(userEmail)}`
-      : `http://localhost:8081/api/books/available-books?role=${UserRole}&userEmail=${encodeURIComponent(
+      : `http://localhost:8081/api/books/available-books?role=Exchanger&userEmail=${encodeURIComponent(
           userEmail
         )}`;
 
@@ -106,8 +95,10 @@ function ViewLendHistory() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(result);
-        setData(result);
+        const bookForExchange = result.filter(
+          (book) => book.userEmail !== userEmail
+        );
+        setData(bookForExchange);
       } else {
         const errorText = await response.text();
         setError(
@@ -125,32 +116,10 @@ function ViewLendHistory() {
     fetchData();
   }, [searchQuery, userEmail]);
 
-  const handleDelete = async (bookId) => {
-    if (!userEmail) return;
-
-    try {
-      const response = await fetch(
-        `http://localhost:8081/api/books/delete?userEmail=${encodeURIComponent(
-          userEmail
-        )}&bookId=${encodeURIComponent(bookId)}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setData((prevData) =>
-          prevData.filter((book) => book.bookId !== bookId)
-        );
-      } else {
-        const errorText = await response.text();
-        setError(
-          `Error: ${response.status} ${response.statusText} ${errorText}`
-        );
-      }
-    } catch (error) {
-      setError(error.message || "Failed to delete book");
-    }
+  const handleExchangeRequest = (book) => {
+    navigate("/DashBoard/SelectBookForExchange", {
+      state: { requestedBook: book },
+    });
   };
 
   return (
@@ -161,15 +130,15 @@ function ViewLendHistory() {
           "radial-gradient(ellipse at center, #A8816C 0%, #905A40 50%, #6E4C3D 100%)",
       }}
     >
-      <SideNav />
+      <ExchangerSideNav />
       <main className="flex-1 p-10 text-white">
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
             <h1 className="text-2xl font-semibold">
-              Books Available For Lending
+              Books Available For Exchange
             </h1>
             <p className="text-sm text-white/70">
-              Here are the books you have listed as available for lending
+              Browse books from other users that are available for exchange
             </p>
           </div>
           <div className="hidden lg:flex items-center gap-4">
@@ -212,7 +181,7 @@ function ViewLendHistory() {
         ) : error ? (
           <div className="text-red-400 text-center">{error}</div>
         ) : data.length === 0 ? (
-          <div className="text-white text-center mt-10">No Books Found</div>
+          <div className="text-white text-center mt-10">No books found</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.map((book) => (
@@ -229,8 +198,8 @@ function ViewLendHistory() {
                         <h2 className="text-lg font-bold text-white">
                           {book.name || "Book Name"}
                         </h2>
-                        <span className="bg-blue-300 text-black rounded-full py-0.5 px-2 text-xs font-semibold ml-2">
-                          Lending
+                        <span className="bg-yellow-300 text-black rounded-full py-0.5 px-2 text-xs font-semibold ml-2">
+                          {book.condition || "10/10"}
                         </span>
                       </div>
                       <p className="text-sm text-white font-light mt-1">
@@ -239,20 +208,14 @@ function ViewLendHistory() {
                       <p className="text-sm text-white font-light mt-1">
                         Quantity: {book.quantity || 0}
                       </p>
-                      {book.dueDate && (
-                        <p className="text-sm text-white font-light mt-1">
-                          Due back:{" "}
-                          {new Date(book.dueDate).toLocaleDateString()}
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
                       <button
-                        onClick={() => handleDelete(book.bookId)}
-                        className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-red-600 hover:bg-red-700"
+                        onClick={() => handleExchangeRequest(book)}
+                        className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-green-600 hover:bg-green-700"
                       >
-                        Delete
+                        Request for Exchange
                       </button>
                     </div>
                   </div>
@@ -266,4 +229,4 @@ function ViewLendHistory() {
   );
 }
 
-export default ViewLendHistory;
+export default ExchangeBook;
