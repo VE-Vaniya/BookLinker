@@ -1,4 +1,4 @@
-import SideNav from "./SideNav";
+import SideNav from "./BorrowerSideNav";
 import {
   BarChart,
   Bar,
@@ -11,7 +11,7 @@ import {
   Label,
 } from "recharts";
 
-const Dashboard = () => {
+const BorrowerDashBoard = () => {
   return (
     <div
       className="min-h-screen flex"
@@ -26,4 +26,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default BorrowerDashBoard;

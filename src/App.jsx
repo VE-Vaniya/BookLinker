@@ -20,6 +20,11 @@ import BuyerProfileSetup from "./components/BuyerComponents/BuyerProfile";
 import ViewAvailableBooks from "./components/BuyerComponents/ViewAvailableBooks";
 import BuyerFileComplaint from "./components/BuyerComponents/BuyerFileComplaint";
 import ViewBuyerTransection from "./components/BuyerComponents/ViewBuyerTransection";
+import BorrowerProfileSetup from "./components/BorrowerComponent/BorrowerProfile";
+import ViewBorrowerAvailableBooks from "./components/BorrowerComponent/ViewBorrowerAvailableBooks";
+import ViewBorrowerTransection from "./components/BorrowerComponent/ViewBorrowerTransection";
+import BorrowerFileComplaint from "./components/BorrowerComponent/BorrowerFileComplaint";
+import BorrowerDashBoard from "./components/BorrowerComponent/BorrowerDashBoard";
 import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -294,6 +299,69 @@ function App() {
             element={
               <ProtectedRoute>
                 <ViewBuyerTransection />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+      {userRole === "Borrower" && (
+        <>
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <BorrowerDashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/BorrowerProfile"
+            element={
+              <ProtectedRoute>
+                <BorrowerProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewBorrowerAvailableBooks"
+            element={
+              <ProtectedRoute>
+                <ViewBorrowerAvailableBooks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/DashBoard/ViewBorrowerAvailableBooks/Cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/DashBoard/BorrowerFileComplaints"
+            element={
+              <ProtectedRoute>
+                <BorrowerFileComplaint />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/DashBoard/ViewBorrowerTransaction"
+            element={
+              <ProtectedRoute>
+                <ViewBorrowerTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
               </ProtectedRoute>
             }
           />
