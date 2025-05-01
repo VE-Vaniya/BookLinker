@@ -9,6 +9,18 @@ import AddBook from "./components/AddBook";
 import FileComplaint from "./components/FileComplaint";
 import ViewTransection from "./components/ViewTransection";
 import ViewHistory from "./components/ViewHistory";
+import ViewDonateHistory from "./components/DonatorComponents/ViewDonateHistory";
+import ViewDonateTransection from "./components/DonatorComponents/ViewDonateTransection";
+import ViewLendTransection from "./components/LenderComponents/ViewLendTransection";
+import ViewLendHistory from "./components/LenderComponents/ViewLendHistory";
+import AddLendBook from "./components/LenderComponents/AddLendBook";
+import AddDonateBook from "./components/DonatorComponents/AddDonateBook";
+import BuyerDashBoard from "./components/BuyerComponents/BuyerDashBoard";
+import BuyerProfileSetup from "./components/BuyerComponents/BuyerProfile";
+import ViewAvailableBooks from "./components/BuyerComponents/ViewAvailableBooks";
+import BuyerFileComplaint from "./components/BuyerComponents/BuyerFileComplaint";
+import ViewBuyerTransection from "./components/BuyerComponents/ViewBuyerTransection";
+import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./components/firebaseconfig";
@@ -110,10 +122,183 @@ function App() {
           />
         </>
       )}
-      {/* if you want to add routes of different role copy the above code which 
-      starts with userRole==="Seller" and paste it here and just change the components 
-      like you have created a different component folder for donator so import those and use it 
-      protectedRoute will remain same  */}
+      {userRole === "Lender" && (
+        <>
+          {/* Seller Routes */}
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <DashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Profile"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/AddBook"
+            element={
+              <ProtectedRoute>
+                <AddLendBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/FileComplaints"
+            element={
+              <ProtectedRoute>
+                <FileComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewTransection"
+            element={
+              <ProtectedRoute>
+                <ViewLendTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewHistory"
+            element={
+              <ProtectedRoute>
+                <ViewLendHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+      {userRole === "Donator" && (
+        <>
+          {/* Donator Routes */}
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <DashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Profile"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/AddBook"
+            element={
+              <ProtectedRoute>
+                <AddDonateBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/FileComplaints"
+            element={
+              <ProtectedRoute>
+                <FileComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewTransection"
+            element={
+              <ProtectedRoute>
+                <ViewDonateTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewHistory"
+            element={
+              <ProtectedRoute>
+                <ViewDonateHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+      {userRole === "Buyer" && (
+        <>
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <BuyerDashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/BuyerProfile"
+            element={
+              <ProtectedRoute>
+                <BuyerProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/ViewAvailableBooks"
+            element={
+              <ProtectedRoute>
+                <ViewAvailableBooks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/ViewAvailableBooks/Cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/BuyerFileComplaints"
+            element={
+              <ProtectedRoute>
+                <BuyerFileComplaint />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/ViewBuyerTransaction"
+            element={
+              <ProtectedRoute>
+                <ViewBuyerTransection />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
       <Route
         path="*"
         element={

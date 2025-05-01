@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from "react";
-import SideNav from "../components/SideNav";
+import SideNav from "../SideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
 
-export default function AddBook() {
+export default function AddDonateBook() {
   const [form, setForm] = useState({
     bookName: "",
     authorName: "",
-    price: "",
     isbn: "",
     condition: "",
     genre: "",
     description: "",
     file: null,
     quantity: 1,
-    status: "Available",
+    status: "donating",
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -52,7 +51,7 @@ export default function AddBook() {
 
           if (roleSnap.exists()) {
             setIsSeller(
-              roleSnap.val() === "seller" || roleSnap.val() === "Seller"
+              roleSnap.val() === "Donator" || roleSnap.val() === "donator"
             );
           }
 
@@ -114,7 +113,6 @@ export default function AddBook() {
 
     if (!form.bookName) newErrors.push("Book Name is required.");
     if (!form.authorName) newErrors.push("Author Name is required.");
-    if (!form.price) newErrors.push("Price is required.");
     if (!form.isbn) newErrors.push("ISBN is required.");
     if (!form.condition) newErrors.push("Condition is required.");
     if (!form.genre) newErrors.push("Genre is required.");
@@ -131,13 +129,6 @@ export default function AddBook() {
       (isNaN(parseInt(form.quantity)) || parseInt(form.quantity) <= 0)
     ) {
       newErrors.push("Quantity must be a positive number greater than 0.");
-    }
-
-    if (
-      form.price &&
-      (isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0)
-    ) {
-      newErrors.push("Price must be a positive number greater than 0.");
     }
 
     return newErrors;
@@ -161,14 +152,13 @@ export default function AddBook() {
       const bookData = {
         name: form.bookName,
         author: form.authorName,
-        price: parseFloat(form.price),
         isbn: form.isbn,
         condition: form.condition,
         genre: form.genre,
         description: form.description,
         userEmail: user.email,
         quantity: parseInt(form.quantity),
-        status: "Available",
+        status: form.status,
       };
 
       formData.append(
@@ -188,14 +178,13 @@ export default function AddBook() {
         setForm({
           bookName: "",
           authorName: "",
-          price: "",
           isbn: "",
           condition: "",
           genre: "",
           description: "",
           file: null,
           quantity: 1,
-          status: "Available",
+          status: "donating",
         });
         setPreviewUrl(null);
         setErrors([]);
@@ -347,15 +336,6 @@ export default function AddBook() {
                 Other
               </option>
             </select>
-            <input
-              type="text"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              placeholder="Price"
-              required
-              className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
-            />
             <input
               type="text"
               name="isbn"

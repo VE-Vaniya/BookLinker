@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
-import SideNav from "../components/SideNav";
+import SideNav from "../SideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
+import { onValue } from "firebase/database";
 
-export default function AddBook() {
+export default function AddLendBook() {
   const [form, setForm] = useState({
     bookName: "",
     authorName: "",
-    price: "",
     isbn: "",
     condition: "",
     genre: "",
     description: "",
     file: null,
     quantity: 1,
-    status: "Available",
+    status: "lending",
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -49,12 +49,6 @@ export default function AddBook() {
             get(roleRef),
             get(profileImageRef),
           ]);
-
-          if (roleSnap.exists()) {
-            setIsSeller(
-              roleSnap.val() === "seller" || roleSnap.val() === "Seller"
-            );
-          }
 
           const imageUrl = imageSnap.exists() ? imageSnap.val() : "";
           setAvatarUrl(
@@ -114,7 +108,6 @@ export default function AddBook() {
 
     if (!form.bookName) newErrors.push("Book Name is required.");
     if (!form.authorName) newErrors.push("Author Name is required.");
-    if (!form.price) newErrors.push("Price is required.");
     if (!form.isbn) newErrors.push("ISBN is required.");
     if (!form.condition) newErrors.push("Condition is required.");
     if (!form.genre) newErrors.push("Genre is required.");
@@ -131,13 +124,6 @@ export default function AddBook() {
       (isNaN(parseInt(form.quantity)) || parseInt(form.quantity) <= 0)
     ) {
       newErrors.push("Quantity must be a positive number greater than 0.");
-    }
-
-    if (
-      form.price &&
-      (isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0)
-    ) {
-      newErrors.push("Price must be a positive number greater than 0.");
     }
 
     return newErrors;
@@ -161,14 +147,14 @@ export default function AddBook() {
       const bookData = {
         name: form.bookName,
         author: form.authorName,
-        price: parseFloat(form.price),
+        price: 0, // Still passed to backend, but not validated or shown
         isbn: form.isbn,
         condition: form.condition,
         genre: form.genre,
         description: form.description,
         userEmail: user.email,
         quantity: parseInt(form.quantity),
-        status: "Available",
+        status: form.status,
       };
 
       formData.append(
@@ -184,18 +170,17 @@ export default function AddBook() {
       });
 
       if (response.ok) {
-        setSuccessMessage("✅ Book added successfully!");
+        setSuccessMessage("✅ Book listed for lending successfully!");
         setForm({
           bookName: "",
           authorName: "",
-          price: "",
           isbn: "",
           condition: "",
           genre: "",
           description: "",
           file: null,
           quantity: 1,
-          status: "Available",
+          status: "lending",
         });
         setPreviewUrl(null);
         setErrors([]);
@@ -209,7 +194,7 @@ export default function AddBook() {
       }
     } catch (err) {
       console.error("❌ Error submitting book:", err);
-      setErrors(["Failed to add book. Please try again."]);
+      setErrors(["Failed to list book for lending. Please try again."]);
       setSuccessMessage("");
     } finally {
       setIsSubmitting(false);
@@ -228,8 +213,8 @@ export default function AddBook() {
       <main className="flex-1 p-10 text-white">
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
-            <h1 className="text-2xl font-semibold">Book Description</h1>
-            <p className="text-sm text-white/70">Add a Book</p>
+            <h1 className="text-2xl font-semibold">Book Lending</h1>
+            <p className="text-sm text-white/70">List a book for lending</p>
           </div>
           <div className="hidden lg:flex items-center gap-4">
             <div className="text-sm bg-white rounded-full px-4 py-1 text-black">
@@ -268,7 +253,6 @@ export default function AddBook() {
             </div>
           )}
 
-          {/* Success Message */}
           {successMessage && (
             <div className="text-green-500 mb-4">{successMessage}</div>
           )}
@@ -299,21 +283,11 @@ export default function AddBook() {
               required
               className="w-full px-4 py-2 rounded-xl bg-transparent border border-white/50 text-white focus:outline-none"
             >
-              <option className="text-black" value="">
-                Condition
-              </option>
-              <option className="text-black" value="Excellent">
-                Excellent
-              </option>
-              <option className="text-black" value="Good">
-                Good
-              </option>
-              <option className="text-black" value="Average">
-                Average
-              </option>
-              <option className="text-black" value="Poor">
-                Poor
-              </option>
+              <option className="text-black" value="">Condition</option>
+              <option className="text-black" value="Excellent">Excellent</option>
+              <option className="text-black" value="Good">Good</option>
+              <option className="text-black" value="Average">Average</option>
+              <option className="text-black" value="Poor">Poor</option>
             </select>
             <select
               name="genre"
@@ -322,37 +296,22 @@ export default function AddBook() {
               required
               className="w-full px-4 py-2 rounded-xl bg-transparent border border-white/50 text-white focus:outline-none"
             >
-              <option className="text-black" value="">
-                Genre
-              </option>
-              <option className="text-black" value="Fiction">
-                Fiction
-              </option>
-              <option className="text-black" value="Non-fiction">
-                Non-fiction
-              </option>
-              <option className="text-black" value="Mystery">
-                Mystery
-              </option>
-              <option className="text-black" value="Biography">
-                Biography
-              </option>
-              <option className="text-black" value="Fantasy">
-                Fantasy
-              </option>
-              <option className="text-black" value="Science">
-                Science
-              </option>
-              <option className="text-black" value="Other">
-                Other
-              </option>
+              <option className="text-black" value="">Genre</option>
+              <option className="text-black" value="Fiction">Fiction</option>
+              <option className="text-black" value="Non-fiction">Non-fiction</option>
+              <option className="text-black" value="Mystery">Mystery</option>
+              <option className="text-black" value="Biography">Biography</option>
+              <option className="text-black" value="Fantasy">Fantasy</option>
+              <option className="text-black" value="Science">Science</option>
+              <option className="text-black" value="Other">Other</option>
             </select>
             <input
-              type="text"
-              name="price"
-              value={form.price}
+              type="number"
+              name="quantity"
+              value={form.quantity}
               onChange={handleChange}
-              placeholder="Price"
+              placeholder="Quantity"
+              min="1"
               required
               className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
             />
@@ -362,16 +321,6 @@ export default function AddBook() {
               value={form.isbn}
               onChange={handleChange}
               placeholder="ISBN"
-              required
-              className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
-            />
-            <input
-              type="number"
-              name="quantity"
-              value={form.quantity}
-              onChange={handleChange}
-              placeholder="Quantity"
-              min="1"
               required
               className="bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
             />
@@ -399,9 +348,7 @@ export default function AddBook() {
               <div className="flex flex-col items-center justify-center text-white/80">
                 <span className="text-4xl mb-2">☁️</span>
                 <p>Upload a File</p>
-                <small className="text-white/50">
-                  drag and drop files here
-                </small>
+                <small className="text-white/50">drag and drop files here</small>
               </div>
             </label>
 
@@ -416,6 +363,15 @@ export default function AddBook() {
             )}
           </div>
 
+          <div className="bg-blue-500/20 p-4 rounded-lg text-center">
+            <p className="text-white font-medium">
+              📚 Thank you for sharing! Your book will be listed for lending to the community.
+            </p>
+            <p className="text-white/80 text-sm mt-1">
+              Borrowers will be able to request this book for free.
+            </p>
+          </div>
+
           <div className="text-center">
             {isSubmitting ? (
               <div className="w-6 h-6 border-4 border-white/50 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -424,7 +380,7 @@ export default function AddBook() {
                 type="submit"
                 className="bg-[#4c2b1f] cursor-pointer text-white px-8 py-2 rounded-xl hover:bg-[#6e3f2d] transition"
               >
-                Submit
+                List for Lending
               </button>
             )}
           </div>
