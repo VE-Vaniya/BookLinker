@@ -14,7 +14,7 @@ export default function AddBook() {
     description: "",
     file: null,
     quantity: 1,
-    status: "sold",
+    status: "Available",
   });
 
   const [currentTime, setCurrentTime] = useState("");
@@ -168,7 +168,7 @@ export default function AddBook() {
         description: form.description,
         userEmail: user.email,
         quantity: parseInt(form.quantity),
-        status: form.status,
+        status: "Available",
       };
 
       formData.append(
@@ -195,7 +195,7 @@ export default function AddBook() {
           description: "",
           file: null,
           quantity: 1,
-          status: "sold",
+          status: "Available",
         });
         setPreviewUrl(null);
         setErrors([]);
