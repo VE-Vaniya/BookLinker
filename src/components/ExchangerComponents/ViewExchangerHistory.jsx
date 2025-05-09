@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import SideNav from "../SideNav";
+import ExchangerSideNav from "./ExchangerSideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
 import { onValue } from "firebase/database";
 
-function ViewLendHistory() {
+function ViewExchangerHistory() {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -107,7 +107,8 @@ function ViewLendHistory() {
       if (response.ok) {
         const result = await response.json();
         console.log(result);
-        setData(result);
+        const ownBooks = result.filter((book) => book.userEmail === userEmail);
+        setData(ownBooks);
       } else {
         const errorText = await response.text();
         setError(
@@ -161,7 +162,7 @@ function ViewLendHistory() {
           "radial-gradient(ellipse at center, #A8816C 0%, #905A40 50%, #6E4C3D 100%)",
       }}
     >
-      <SideNav />
+      <ExchangerSideNav />
       <main className="flex-1 p-10 text-white">
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
@@ -266,4 +267,4 @@ function ViewLendHistory() {
   );
 }
 
-export default ViewLendHistory;
+export default ViewExchangerHistory;

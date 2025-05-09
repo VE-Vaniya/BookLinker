@@ -26,6 +26,18 @@ import ViewBorrowerTransection from "./components/BorrowerComponent/ViewBorrower
 import BorrowerFileComplaint from "./components/BorrowerComponent/BorrowerFileComplaint";
 import BorrowerDashBoard from "./components/BorrowerComponent/BorrowerDashBoard";
 import PayFine from "./components/BorrowerComponent/PayFine";
+import ExchangerProfileSetup from "./components/ExchangerComponents/ExchangerProfile";
+import ExchangerDashBoard from "./components/ExchangerComponents/ExchangerDashBoard";
+import ExchangerFileComplaint from "./components/ExchangerComponents/ExchangerFileComplaint";
+import ViewExchangerTransection from "./components/ExchangerComponents/ViewExchangerTransection";
+import ViewExchangerHistory from "./components/ExchangerComponents/ViewExchangerHistory";
+import ExchangerAddBook from "./components/ExchangerComponents/ExchangerAddBook";
+import ExchangeBook from "./components/ExchangerComponents/ExchangeBook";
+import SelectBookForExchange from "./components/ExchangerComponents/SelectBookForExchange";
+import ExchangeRequest from "./components/ExchangerComponents/ExchangeRequest";
+import ConfirmExchange from "./components/ExchangerComponents/ConfirmExchange";
+import MyExchangeRequests from "./components/ExchangerComponents/MyExchangeRequests";
+import ReceivedExchangeRequests from "./components/ExchangerComponents/ReceivedExchangeRequests";
 import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
 import BuyerNotification from "./components/BuyerComponents/BuyerNotifications"
@@ -35,6 +47,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./components/firebaseconfig";
 import { getDatabase, onValue, ref } from "firebase/database";
 import { useNavigate, useLocation } from "react-router-dom";
+import ExchangeDebugger from "./components/ExchangerComponents/ExchangeDebugger";
+
 function App() {
   const [userRole, setUserRole] = useState(null);
   const db = getDatabase();
@@ -407,6 +421,122 @@ function App() {
             element={
               <ProtectedRoute>
                 <PayFine />
+              </ProtectedRoute>
+            }
+          />
+        </>
+      )}
+      {userRole === "Exchanger" && (
+        <>
+          <Route
+            path="/DashBoard"
+            element={
+              <ProtectedRoute>
+                <ExchangerDashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Profile"
+            element={
+              <ProtectedRoute>
+                <ExchangerProfileSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/AddBook"
+            element={
+              <ProtectedRoute>
+                <ExchangerAddBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/FileComplaints"
+            element={
+              <ProtectedRoute>
+                <ExchangerFileComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewTransection"
+            element={
+              <ProtectedRoute>
+                <ViewExchangerTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ViewHistory"
+            element={
+              <ProtectedRoute>
+                <ViewExchangerHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/Chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ExchangeBook"
+            element={
+              <ProtectedRoute>
+                <ExchangeBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/SelectBookForExchange"
+            element={
+              <ProtectedRoute>
+                <SelectBookForExchange />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ConfirmExchange"
+            element={
+              <ProtectedRoute>
+                <ConfirmExchange />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/MyExchangeRequests"
+            element={
+              <ProtectedRoute>
+                <MyExchangeRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ReceivedExchangeRequests"
+            element={
+              <ProtectedRoute>
+                <ReceivedExchangeRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ExchangeRequest"
+            element={
+              <ProtectedRoute>
+                <ExchangeRequest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/DashBoard/ExchangeDebugger"
+            element={
+              <ProtectedRoute>
+                <ExchangeDebugger />
               </ProtectedRoute>
             }
           />
