@@ -13,11 +13,16 @@ function Cart() {
   const [currentDate, setCurrentDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState("");
 
-  // Fetch avatar and set time
+  // Fetch avatar, user email, and set time
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
+
+    if (user) {
+      setUserEmail(user.email);
+    }
 
     const fetchAvatar = async () => {
       if (user) {
@@ -66,48 +71,219 @@ function Cart() {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Load cart items from localStorage
+  // Load cart items from API and fetch book details
   useEffect(() => {
-    try {
-      const storedCart = localStorage.getItem("bookCart");
-      if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
+    const fetchCartItems = async () => {
+      if (!userEmail) return;
+
+      setLoading(true);
+      try {
+        // Fetch cart items
+        const response = await fetch(
+          `http://localhost:8081/api/cart/get?userEmail=${encodeURIComponent(
+            userEmail
+          )}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch cart: ${errorText}`);
+        }
+
+        const cartItemsData = await response.json();
+        console.log("Cart items from API:", cartItemsData);
+
+        // For each cart item, fetch book details
+        const itemsWithDetails = await Promise.all(
+          cartItemsData.map(async (item) => {
+            try {
+              // Fetch book details using bookId
+              const db = getDatabase();
+              const bookRef = ref(db, `books/${item.bookId}`);
+              const bookSnap = await get(bookRef);
+
+              if (bookSnap.exists()) {
+                const bookData = bookSnap.val();
+                return {
+                  ...item,
+                  book: bookData,
+                };
+              } else {
+                console.error(`Book with ID ${item.bookId} not found`);
+                return {
+                  ...item,
+                  book: {
+                    name: "Book Not Found",
+                    author: "Unknown",
+                    condition: "N/A",
+                    imageUrl: "/placeholder-image.jpg",
+                  },
+                };
+              }
+            } catch (error) {
+              console.error(
+                `Error fetching book details for ${item.bookId}:`,
+                error
+              );
+              return {
+                ...item,
+                book: {
+                  name: "Error Loading Book",
+                  author: "Unknown",
+                  condition: "N/A",
+                  imageUrl: "/placeholder-image.jpg",
+                },
+              };
+            }
+          })
+        );
+
+        setCartItems(itemsWithDetails);
+      } catch (error) {
+        console.error("Failed to load cart items:", error);
+        setError("Failed to load cart items. Please try again.");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    fetchCartItems();
+  }, [userEmail]);
+
+  // Remove item from cart
+  const removeFromCart = async (bookId) => {
+    if (!userEmail) {
+      setError("User not logged in. Please log in to manage your cart.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/cart/remove?userEmail=${encodeURIComponent(
+          userEmail
+        )}&bookId=${encodeURIComponent(bookId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to remove item from cart: ${errorText}`);
+      }
+
+      // Refresh cart data after successful removal
+      fetchCartItems();
+    } catch (error) {
+      setError("Failed to remove item from cart");
+      console.error(error);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Fetch cart items function to be used after operations
+  const fetchCartItems = async () => {
+    if (!userEmail) return;
+
+    setLoading(true);
+    try {
+      // Fetch cart items
+      const response = await fetch(
+        `http://localhost:8081/api/cart/get?userEmail=${encodeURIComponent(
+          userEmail
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch cart: ${errorText}`);
+      }
+
+      const cartItemsData = await response.json();
+
+      // For each cart item, fetch book details
+      const itemsWithDetails = await Promise.all(
+        cartItemsData.map(async (item) => {
+          try {
+            // Fetch book details using bookId
+            const db = getDatabase();
+            const bookRef = ref(db, `books/${item.bookId}`);
+            const bookSnap = await get(bookRef);
+
+            if (bookSnap.exists()) {
+              const bookData = bookSnap.val();
+              return {
+                ...item,
+                book: bookData,
+              };
+            } else {
+              console.error(`Book with ID ${item.bookId} not found`);
+              return {
+                ...item,
+                book: {
+                  name: "Book Not Found",
+                  author: "Unknown",
+                  condition: "N/A",
+                  imageUrl: "/placeholder-image.jpg",
+                },
+              };
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching book details for ${item.bookId}:`,
+              error
+            );
+            return {
+              ...item,
+              book: {
+                name: "Error Loading Book",
+                author: "Unknown",
+                condition: "N/A",
+                imageUrl: "/placeholder-image.jpg",
+              },
+            };
+          }
+        })
+      );
+
+      setCartItems(itemsWithDetails);
     } catch (error) {
       console.error("Failed to load cart items:", error);
       setError("Failed to load cart items. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  // Remove item from cart
-  const removeFromCart = (bookId) => {
-    try {
-      const updatedCart = cartItems.filter((item) => item.bookId !== bookId);
-      setCartItems(updatedCart);
-      localStorage.setItem("bookCart", JSON.stringify(updatedCart));
-    } catch (error) {
-      setError("Failed to remove item from cart");
-      console.log(error);
-    }
+  // Calculate total price
+  const calculateTotal = () => {
+    return cartItems
+      .reduce((total, item) => {
+        const price = item.book?.price || 0;
+        return total + price * item.quantity;
+      }, 0)
+      .toFixed(2);
   };
 
   // Handle checkout
   const handleCheckout = () => {
     alert("Proceeding to checkout...");
     // Implement checkout logic or navigation here
-  };
-
-  // Clear entire cart
-  const clearCart = () => {
-    try {
-      setCartItems([]);
-      localStorage.setItem("bookCart", JSON.stringify([]));
-    } catch (error) {
-      setError("Failed to clear cart");
-      console.log(error);
-    }
   };
 
   return (
@@ -152,7 +328,7 @@ function Cart() {
 
         <div className="mb-6">
           <button
-            onClick={() => navigate(-1)} // Changed to navigate(-1) to act like a browser back button
+            onClick={() => navigate(-1)}
             className="bg-[#4a2c2a] hover:bg-[#3a1c1a] text-white px-4 py-2 rounded-lg flex items-center transition-colors"
           >
             <svg
@@ -173,17 +349,21 @@ function Cart() {
           </button>
         </div>
 
+        {error && (
+          <div className="bg-red-500 text-white p-2 rounded-lg mb-4 text-center">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center items-center min-h-[300px]">
             <div className="w-8 h-8 border-4 border-white/50 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : error ? (
-          <div className="text-red-400 text-center p-4">{error}</div>
         ) : cartItems.length === 0 ? (
           <div className="text-center p-10">
             <p className="text-xl mb-4">Your cart is empty</p>
             <button
-              onClick={() => navigate(-1)} // Changed to navigate(-1) for consistency
+              onClick={() => navigate(-1)}
               className="bg-[#4a2c2a] hover:bg-[#3a1c1a] text-white px-6 py-2 rounded-lg"
             >
               Browse Books
@@ -191,52 +371,55 @@ function Cart() {
           </div>
         ) : (
           <>
-            <div className="mb-4 flex justify-between items-center">
+            <div className="mb-4">
               <h2 className="text-xl">
                 {cartItems.length} {cartItems.length === 1 ? "item" : "items"}{" "}
                 in cart
               </h2>
-              <button
-                onClick={clearCart}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-lg text-sm"
-              >
-                Clear Cart
-              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cartItems.map((book) => (
-                <div key={book.bookId} className="m-2.5">
+              {cartItems.map((item) => (
+                <div key={item.bookId} className="m-2.5">
                   <div className="flex flex-col bg-[#7a5442] rounded-2xl overflow-hidden shadow-md transition-transform transform hover:scale-105 w-full max-w-[320px] mx-auto h-full">
                     <img
-                      src={book.imageUrl || "/placeholder-image.jpg"}
-                      alt="Book Cover"
+                      src={item.book?.imageUrl || "/placeholder-image.jpg"}
+                      alt={item.book?.name || "Book Cover"}
                       className="w-full h-48 object-cover"
                     />
                     <div className="p-4 flex flex-col justify-between flex-1">
                       <div className="mb-2">
                         <div className="flex items-center justify-between">
                           <h2 className="text-lg font-bold text-white">
-                            {book.name || "Book Name"}
+                            {item.book?.name || "Book Name"}
                           </h2>
                           <span className="bg-yellow-300 text-black rounded-full py-0.5 px-2 text-xs font-semibold ml-2">
-                            {book.condition || "N/A"}
+                            {item.book?.condition || "N/A"}
                           </span>
                         </div>
                         <p className="text-sm text-white font-light mt-1">
-                          {book.author || "Author's Name"}
+                          {item.book?.author || "Author's Name"}
                         </p>
-                        <p className="text-sm text-white font-light mt-1">
-                          Quantity: {book.quantity || 1}
+                        <p className="text-sm text-white mt-1">
+                          Price: ${item.book?.price || "0.00"}
+                        </p>
+                        <p className="text-sm text-white mt-1">
+                          Quantity: {item.quantity || 1}
+                        </p>
+                        <p className="text-sm text-white font-semibold mt-1">
+                          Subtotal: $
+                          {(
+                            (item.book?.price || 0) * (item.quantity || 1)
+                          ).toFixed(2)}
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between mt-2">
                         <button
-                          onClick={() => removeFromCart(book.bookId)}
+                          onClick={() => removeFromCart(item.bookId)}
                           className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-red-600 hover:bg-red-700"
                         >
-                          Remove
+                          Remove One
                         </button>
                       </div>
                     </div>
@@ -245,10 +428,14 @@ function Cart() {
               ))}
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 bg-[#4a2c2a] p-4 rounded-lg shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-semibold">Cart Total:</span>
+                <span className="font-bold text-xl">${calculateTotal()}</span>
+              </div>
               <button
                 onClick={handleCheckout}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold"
+                className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold"
               >
                 Proceed to Checkout
               </button>

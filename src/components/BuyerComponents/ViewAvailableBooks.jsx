@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import SideNav from "./BuyerSideNav";
+import BuyerSideNav from "./BuyerSideNav";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
@@ -14,10 +14,28 @@ function ViewAvailableBooks() {
   const [currentDate, setCurrentDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState("");
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+
+  // New state for quantity popup
+  const [showQuantityPopup, setShowQuantityPopup] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [quantity, setQuantity] = useState("1");
+  const [quantityError, setQuantityError] = useState("");
+
+  // New state for managing chat initialization
+  const [isInitializingChat, setIsInitializingChat] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
+
+    if (user) {
+      setUserEmail(user.email);
+      fetchWishlist(user.email);
+      fetchCart(user.email);
+    }
 
     const fetchAvatar = async () => {
       if (user) {
@@ -66,10 +84,100 @@ function ViewAvailableBooks() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // New function to get seller emails from Firebase
+  const fetchSellerEmailsFromFirebase = async (booksList) => {
+    const db = getDatabase();
+    const booksRef = ref(db, "books");
+
+    try {
+      // Create a copy of the books list to update with seller emails
+      let updatedBooks = [...booksList];
+
+      // Get all books data from Firebase
+      const booksSnapshot = await get(booksRef);
+
+      if (booksSnapshot.exists()) {
+        const booksData = booksSnapshot.val();
+
+        // Loop through each book in our list and find its seller email in Firebase
+        updatedBooks = updatedBooks.map((book) => {
+          const bookId = book.bookId;
+          if (booksData[bookId] && booksData[bookId].userEmail) {
+            return {
+              ...book,
+              sellerEmail: booksData[bookId].userEmail,
+            };
+          }
+          return book;
+        });
+      }
+
+      return updatedBooks;
+    } catch (error) {
+      console.error("Error fetching seller emails from Firebase:", error);
+      // Return original books list if there's an error
+      return booksList;
+    }
+  };
+
+  const fetchCart = async (email) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/cart/get?userEmail=${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // Extract bookIds from cart items
+        const cartBookIds = result.map((item) => item.bookId);
+        setCartItems(cartBookIds);
+      } else {
+        console.error("Failed to fetch cart");
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    }
+  };
+
+  const fetchWishlist = async (email) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/wishlist/get?userEmail=${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // Extract bookIds from wishlist items
+        const wishlistBookIds = result.map((item) => item.bookId);
+        setWishlistItems(wishlistBookIds);
+      } else {
+        console.error("Failed to fetch wishlist");
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    // remove url pice of code and use actual code to get all books
+    // remove url piece of code and use actual code to get all books
     const url = searchQuery.trim()
       ? `http://localhost:8081/api/books/search?query=${encodeURIComponent(
           searchQuery
@@ -86,7 +194,13 @@ function ViewAvailableBooks() {
 
       if (response.ok) {
         const result = await response.json();
-        setData(result);
+        console.log("API response:", result); // Log the API response
+
+        // Fetch seller emails from Firebase and update books data
+        const booksWithSellerEmails = await fetchSellerEmailsFromFirebase(
+          result
+        );
+        setData(booksWithSellerEmails);
       } else {
         const errorText = await response.text();
         setError(
@@ -102,39 +216,195 @@ function ViewAvailableBooks() {
 
   useEffect(() => {
     fetchData();
+    console.log("Data fetched:", data); // Add logging to check data structure
   }, [searchQuery]);
 
   const handleCartClick = () => {
     navigate("./Cart");
   };
 
-  const handleAddToCart = async (book) => {
-    try {
-      // Get existing cart from localStorage or initialize empty array
-      const existingCart = JSON.parse(localStorage.getItem("bookCart") || "[]");
+  const handleAddToCartClick = (book) => {
+    // Check if the book is already in the cart
+    if (cartItems.includes(book.bookId)) {
+      setError("This book is already in your cart!");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
 
-      // Check if the book is already in the cart
-      const bookExists = existingCart.some(
-        (item) => item.bookId === book.bookId
+    // Open the quantity popup and set the selected book
+    setSelectedBook(book);
+    setQuantity("1"); // Reset quantity to default
+    setQuantityError(""); // Clear any previous errors
+    setShowQuantityPopup(true);
+  };
+
+  const handleQuantityChange = (e) => {
+    setQuantity(e.target.value);
+    setQuantityError("");
+  };
+
+  const validateAndAddToCart = async () => {
+    // Validate that quantity is a number and within valid range
+    if (
+      !quantity ||
+      isNaN(quantity) ||
+      quantity.includes(".") ||
+      parseInt(quantity) <= 0
+    ) {
+      setQuantityError("Please enter a valid positive whole number.");
+      return;
+    }
+
+    const numericQuantity = parseInt(quantity);
+
+    if (numericQuantity > selectedBook.quantity) {
+      setQuantityError(
+        `Maximum available quantity is ${selectedBook.quantity}`
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/cart/add?userEmail=${encodeURIComponent(
+          userEmail
+        )}&bookId=${encodeURIComponent(
+          selectedBook.bookId
+        )}&quantity=${numericQuantity}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      if (bookExists) {
-        setError("This book is already in your cart!");
+      if (response.ok) {
+        // Update cart items in state
+        setCartItems([...cartItems, selectedBook.bookId]);
+        alert("Book added to cart successfully!");
+        // Close the popup
+        setShowQuantityPopup(false);
+      } else {
+        const errorText = await response.text();
+        setError(`Failed to add to cart: ${errorText}`);
         setTimeout(() => setError(null), 3000);
-        return;
       }
-
-      // Add book to cart
-      const updatedCart = [...existingCart, book];
-
-      // Save updated cart to localStorage
-      localStorage.setItem("bookCart", JSON.stringify(updatedCart));
-
-      // Show success message
-      alert("Book added to cart successfully!");
     } catch (error) {
       setError(error.message || "Failed to add book to cart");
+      setTimeout(() => setError(null), 3000);
     }
+  };
+
+  const handleAddToWishlist = async (book) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/wishlist/add?userEmail=${encodeURIComponent(
+          userEmail
+        )}&bookId=${encodeURIComponent(book.bookId)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Update wishlist items in state
+        setWishlistItems([...wishlistItems, book.bookId]);
+        alert("Book added to wishlist successfully!");
+      } else {
+        const errorText = await response.text();
+        setError(`Failed to add to wishlist: ${errorText}`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      setError(error.message || "Failed to add to wishlist");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleRemoveFromWishlist = async (bookId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/wishlist/remove?userEmail=${encodeURIComponent(
+          userEmail
+        )}&bookId=${encodeURIComponent(bookId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Update wishlist items in state
+        setWishlistItems(wishlistItems.filter((id) => id !== bookId));
+        alert("Book removed from wishlist successfully!");
+      } else {
+        const errorText = await response.text();
+        setError(`Failed to remove from wishlist: ${errorText}`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      setError(error.message || "Failed to remove from wishlist");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // New function to initialize chat with book owner
+  const handleChatWithOwner = async (sellerEmail) => {
+    if (!userEmail) {
+      setError("You must be logged in to chat with the seller");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    if (userEmail === sellerEmail) {
+      setError("You cannot chat with yourself");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    setIsInitializingChat(true);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/messages/getchatroom?senderEmail=${encodeURIComponent(
+          userEmail
+        )}&receiverEmail=${encodeURIComponent(sellerEmail)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Navigate to the chat page with the chatId
+        navigate(`/DashBoard/BuyerChat`);
+      } else {
+        const errorText = await response.text();
+        setError(`Failed to initialize chat: ${errorText}`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      setError(error.message || "Failed to initialize chat");
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setIsInitializingChat(false);
+    }
+  };
+
+  const isBookInWishlist = (bookId) => {
+    return wishlistItems.includes(bookId);
+  };
+
+  const isBookInCart = (bookId) => {
+    return cartItems.includes(bookId);
   };
 
   return (
@@ -145,7 +415,7 @@ function ViewAvailableBooks() {
           "radial-gradient(ellipse at center, #A8816C 0%, #905A40 50%, #6E4C3D 100%)",
       }}
     >
-      <SideNav />
+      <BuyerSideNav />
       <main className="flex-1 p-10 text-white">
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
@@ -210,12 +480,16 @@ function ViewAvailableBooks() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-500 text-white p-2 rounded-lg mb-4 text-center">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center items-center min-h-[300px]">
             <div className="w-8 h-8 border-4 border-white/50 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : error ? (
-          <div className="text-red-400 text-center">{error}</div>
         ) : data.length === 0 ? (
           <div className="text-white text-center mt-10">No books found</div>
         ) : (
@@ -244,20 +518,160 @@ function ViewAvailableBooks() {
                       <p className="text-sm text-white font-light mt-1">
                         Quantity: {book.quantity || 0}
                       </p>
+                      <p className="text-sm text-white font-light mt-1">
+                        Seller:{" "}
+                        {book.sellerEmail
+                          ? book.sellerEmail.split("@")[0]
+                          : "Unknown"}
+                      </p>
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <button
-                        onClick={() => handleAddToCart(book)}
-                        className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-red-600 hover:bg-red-700"
-                      >
-                        Add to Cart
-                      </button>
+                      {isBookInCart(book.bookId) ? (
+                        <button className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-default bg-gray-600">
+                          In Cart
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToCartClick(book)}
+                          className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-red-600 hover:bg-red-700"
+                        >
+                          Add to Cart
+                        </button>
+                      )}
+
+                      {isBookInWishlist(book.bookId) ? (
+                        <button
+                          onClick={() => handleRemoveFromWishlist(book.bookId)}
+                          className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-pink-600 hover:bg-pink-700 flex items-center"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Wishlisted
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToWishlist(book)}
+                          className="text-white rounded-lg py-1 px-4 text-xs font-bold border-none cursor-pointer bg-purple-600 hover:bg-purple-700 flex items-center"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                          Wishlist
+                        </button>
+                      )}
                     </div>
+
+                    {/* Chat with Seller Button - Always visible */}
+                    <button
+                      onClick={() =>
+                        handleChatWithOwner(
+                          book.sellerEmail || "seller@example.com"
+                        )
+                      }
+                      disabled={
+                        isInitializingChat ||
+                        !book.sellerEmail ||
+                        book.sellerEmail === userEmail
+                      }
+                      className={`w-full mt-3 text-white rounded-lg py-1 px-4 text-xs font-bold border-none flex items-center justify-center ${
+                        !book.sellerEmail || book.sellerEmail === userEmail
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                      }`}
+                    >
+                      {isInitializingChat ? (
+                        <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin mr-2" />
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                      )}
+                      Chat with Seller
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Quantity Popup Modal */}
+        {showQuantityPopup && selectedBook && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-50">
+            <div className="bg-[#7a5442] p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Enter Quantity for {selectedBook.name}
+              </h3>
+
+              <div className="text-white mb-2">
+                Available: {selectedBook.quantity}
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="quantity" className="block text-white mb-2">
+                  Quantity:
+                </label>
+                <input
+                  type="text"
+                  id="quantity"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  className="w-full px-3 py-2 bg-[#6e4c3d] text-white rounded border border-white/30 focus:outline-none focus:border-white"
+                  autoFocus
+                />
+                {quantityError && (
+                  <p className="text-red-400 text-sm mt-1">{quantityError}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowQuantityPopup(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={validateAndAddToCart}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

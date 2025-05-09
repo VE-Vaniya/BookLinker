@@ -7,6 +7,7 @@ export default function BuyerFileComplaint() {
   const [form, setForm] = useState({
     natureOfConcern: "",
     details: "",
+    complaineeEmail: "",
   });
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
@@ -15,6 +16,8 @@ export default function BuyerFileComplaint() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [emailVerificationStatus, setEmailVerificationStatus] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -67,9 +70,58 @@ export default function BuyerFileComplaint() {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (
+        form.complaineeEmail &&
+        form.natureOfConcern === "Complaint Against User"
+      ) {
+        verifyEmail();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [form.complaineeEmail]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "complaineeEmail") {
+      setEmailVerificationStatus(null);
+    }
+  };
+
+  const verifyEmail = async () => {
+    if (!form.complaineeEmail || form.complaineeEmail.trim() === "") {
+      setEmailVerificationStatus("empty");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.complaineeEmail)) {
+      setEmailVerificationStatus("invalid");
+      return false;
+    }
+
+    setIsVerifyingEmail(true);
+    try {
+      const db = getDatabase();
+      const safeEmail = form.complaineeEmail.replace(/\./g, "_");
+      const userRef = ref(db, `userProfiles/${safeEmail}`);
+
+      const snapshot = await get(userRef);
+      const exists = snapshot.exists();
+
+      setEmailVerificationStatus(exists ? "exists" : "not-found");
+      return exists;
+    } catch (error) {
+      console.error("Error verifying email:", error);
+      setEmailVerificationStatus("error");
+      return false;
+    } finally {
+      setIsVerifyingEmail(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -83,6 +135,14 @@ export default function BuyerFileComplaint() {
       return;
     }
 
+    if (form.natureOfConcern === "Complaint Against User") {
+      const emailValid = await verifyEmail();
+      if (!emailValid) {
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -94,23 +154,29 @@ export default function BuyerFileComplaint() {
         username: user.displayName || "Unknown",
       };
 
-      const response = await fetch(
-        "http://localhost:8081/api/complaints/file-general",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      if (form.natureOfConcern === "Complaint Against User") {
+        payload.complaineeEmail = form.complaineeEmail;
+      }
+
+      const endpoint =
+        form.natureOfConcern === "Complaint Against User"
+          ? "http://localhost:8081/api/complaints/file"
+          : "http://localhost:8081/api/complaints/file-general";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (response.ok) {
         const result = await response.json();
         setSuccessMessage(result.message);
-        setForm({ natureOfConcern: "", details: "" });
+        setForm({ natureOfConcern: "", details: "", complaineeEmail: "" });
+        setEmailVerificationStatus(null);
 
-        // Auto-hide success message after 5 seconds
         setTimeout(() => {
           setSuccessMessage("");
         }, 5000);
@@ -139,7 +205,7 @@ export default function BuyerFileComplaint() {
         <div className="flex flex-col items-center mb-10 lg:flex-row lg:justify-between lg:items-center">
           <div className="text-center lg:text-left mb-4 lg:mb-0">
             <h1 className="text-2xl font-semibold">File Complaint</h1>
-            <p className="text-sm text-white/70">Add a Complain</p>
+            <p className="text-sm text-white/70">Add a Complaint</p>
           </div>
           <div className="hidden lg:flex items-center gap-4">
             <div className="text-sm bg-white rounded-full px-4 py-1 text-black">
@@ -204,10 +270,50 @@ export default function BuyerFileComplaint() {
             <option className="text-black" value="Content Issue">
               Content Issue
             </option>
+            <option className="text-black" value="Complaint Against User">
+              Complaint Against User
+            </option>
             <option className="text-black" value="Other">
               Other
             </option>
           </select>
+
+          {form.natureOfConcern === "Complaint Against User" && (
+            <div className="space-y-2">
+              <input
+                type="email"
+                name="complaineeEmail"
+                value={form.complaineeEmail}
+                onChange={handleChange}
+                placeholder="Enter user's email"
+                className="w-full bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
+              />
+
+              {isVerifyingEmail && (
+                <div className="text-sm text-white/70">Verifying email...</div>
+              )}
+
+              {emailVerificationStatus && !isVerifyingEmail && (
+                <div
+                  className={`text-sm ${
+                    emailVerificationStatus === "exists"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {emailVerificationStatus === "exists" && "✅ User exists"}
+                  {emailVerificationStatus === "not-found" &&
+                    "❌ User not found"}
+                  {emailVerificationStatus === "empty" &&
+                    "❌ Email cannot be empty"}
+                  {emailVerificationStatus === "invalid" &&
+                    "❌ Invalid email format"}
+                  {emailVerificationStatus === "error" &&
+                    "❌ Error verifying email"}
+                </div>
+              )}
+            </div>
+          )}
 
           <textarea
             name="details"
@@ -216,6 +322,7 @@ export default function BuyerFileComplaint() {
             placeholder="Describe your concern in detail..."
             required
             className="w-full bg-transparent border border-white/50 px-4 py-2 rounded-xl text-white placeholder-white/70"
+            rows="5"
           />
 
           <div className="text-center">

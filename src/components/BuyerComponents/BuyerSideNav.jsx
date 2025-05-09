@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseconfig";
 import { useNavigate } from "react-router-dom";
@@ -51,10 +51,11 @@ const BuyerSideNav = () => {
           <span className="text-xl font-semibold text-left">
             📚 Book Linker
           </span>
-
-          <button onClick={toggleSidebar} className="lg:hidden text-white">
-            <X size={24} />
-          </button>
+          {isOpen && (
+            <button onClick={toggleSidebar} className="lg:hidden text-white">
+              <X size={24} />
+            </button>
+          )}
         </div>
 
         <nav className="flex flex-col gap-3 text-left">
@@ -72,6 +73,13 @@ const BuyerSideNav = () => {
             onClick={() => setIsOpen(false)}
           >
             📚 Available Books
+          </NavLink>
+          <NavLink
+            to="/DashBoard/BuyerWishList"
+            className={linkClasses}
+            onClick={() => setIsOpen(false)}
+          >
+            ❤️ Wishlist
           </NavLink>
           <NavLink
             to="/DashBoard/BuyerProfile"
@@ -99,11 +107,19 @@ const BuyerSideNav = () => {
 
           {/* Chat Button */}
           <NavLink
-            to="/DashBoard/Chat"
+            to="/DashBoard/BuyerChat"
             className={linkClasses}
             onClick={() => setIsOpen(false)}
           >
             💬 Chat
+          </NavLink>
+
+          <NavLink
+            to="/DashBoard/BuyerNotifications"
+            className={linkClasses}
+            onClick={() => setIsOpen(false)}
+          >
+            🔔 Notifications
           </NavLink>
         </nav>
 

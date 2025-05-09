@@ -28,13 +28,18 @@ import BorrowerDashBoard from "./components/BorrowerComponent/BorrowerDashBoard"
 import PayFine from "./components/BorrowerComponent/PayFine";
 import Cart from "./components/BuyerComponents/Cart";
 import Chat from "./components/Chat";
+import BuyerNotification from "./components/BuyerComponents/BuyerNotifications"
+import BuyerChat from "./components/BuyerComponents/BuyerChat";
+import BuyerWishList from "./components/BuyerComponents/BuyerWishList";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./components/firebaseconfig";
 import { getDatabase, onValue, ref } from "firebase/database";
-
+import { useNavigate, useLocation } from "react-router-dom";
 function App() {
   const [userRole, setUserRole] = useState(null);
   const db = getDatabase();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const getUserRole = (uid) => {
     const userRoleRef = ref(db, `users/${uid}/role`);
@@ -53,6 +58,12 @@ function App() {
         getUserRole(uid);
       } else {
         setUserRole(null);
+        const publicRoutes = ["/", "/login", "/signup"];
+        const currentPath = location.pathname;
+        const isPublic = publicRoutes.includes(currentPath);
+        if (!isPublic) {
+          navigate("/login");
+        }
       }
     });
 
@@ -300,6 +311,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <ViewBuyerTransection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/Dashboard/BuyerChat"
+            element={
+              <ProtectedRoute>
+                <BuyerChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/Dashboard/BuyerNotifications"
+            element={
+              <ProtectedRoute>
+                <BuyerNotification />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/Dashboard/BuyerWishList"
+            element={
+              <ProtectedRoute>
+                <BuyerWishList />
               </ProtectedRoute>
             }
           />
